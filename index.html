@@ -277,11 +277,16 @@ async function fetchFromCloud(){
         });
       }
       saveLocal();
-      renderAll();
+      // 입력 중이면 포커스를 유지하며 스마트 업데이트
+      const focused=document.activeElement;
+      if(focused && (focused.classList.contains("num")||focused.classList.contains("tip"))){
+        smartSyncUpdate();
+      } else {
+        renderAll();
+      }
       setSyncStatus("connected","연결됨");
       updateSyncTime();
     } else if(json.success){
-      // 서버에 데이터가 없음 (첫 연결) - 로컬 유지
       setSyncStatus("connected","연결됨 (서버 비어있음)");
       updateSyncTime();
     } else {
@@ -292,6 +297,35 @@ async function fetchFromCloud(){
     setSyncStatus("error","연결 실패");
   }
   isSyncing=false;
+}
+
+// ── 포커스 유지하며 서버 데이터로 입력칸 + 통계 업데이트 ──
+function smartSyncUpdate(){
+  const focused=document.activeElement;
+  // 현재 포커스된 input이 아닌 다른 input값들만 서버 데이터로 갱신
+  document.querySelectorAll("input.num").forEach(inp=>{
+    if(inp===focused) return; // 현재 입력 중인 칸은 건드리지 않음
+    const k=inp.getAttribute("onchange")?.match(/'([^']+)'/g);
+    if(k && k.length>=2){
+      const key=k[0].replace(/'/g,"");
+      const member=k[1].replace(/'/g,"");
+      const serverVal=data[key]?.[member]||0;
+      if(parseInt(inp.value)||0 !== serverVal){
+        inp.value=serverVal||"";
+      }
+    }
+  });
+  // 꿀팁도 업데이트 (포커스된 것 제외)
+  document.querySelectorAll("input.tip").forEach(inp=>{
+    if(inp===focused) return;
+    const k=inp.getAttribute("onchange")?.match(/'([^']+)'/);
+    if(k){
+      const key=k[1];
+      const serverTip=tips[key]||"";
+      if(inp.value!==serverTip) inp.value=serverTip;
+    }
+  });
+  updateStatsOnly();
 }
 
 // POST: 단일 셀 업데이트
