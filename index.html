@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>마비노기 함선제작 재료표</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;600;700;900&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(160deg,#0d0d1a 0%,#1a1a2e 50%,#16213e 100%);color:#f0e6d0;font-family:'Noto Sans KR',sans-serif;min-height:100vh}
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+  input[type=number]{-moz-appearance:textfield}
+  ::-webkit-scrollbar{height:6px;width:6px}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}
+  ::-webkit-scrollbar-thumb{background:rgba(230,160,25,0.3);border-radius:3px}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 12px}
+  .header{text-align:center;padding:36px 0 16px}
+  .header-sub{font-size:11px;letter-spacing:6px;color:#e6a019;text-transform:uppercase;margin-bottom:6px}
+  .header h1{font-size:clamp(24px,5vw,38px);font-weight:900;background:linear-gradient(135deg,#e6a019,#f5d77a,#e6a019);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header-line{width:80px;height:2px;background:linear-gradient(90deg,transparent,#e6a019,transparent);margin:14px auto}
+  .toolbar{display:flex;justify-content:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .toolbar button{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#8a8a9a;cursor:pointer;font-size:12px;font-family:'Noto Sans KR';transition:all 0.2s}
+  .toolbar button:hover{border-color:#e6a019;color:#e6a019}
+  .overall{background:rgba(230,160,25,0.06);border:1px solid rgba(230,160,25,0.2);border-radius:14px;padding:20px;margin-bottom:20px}
+  .overall-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .overall-label{font-size:14px;font-weight:600;color:#e6a019}
+  .overall-pct{font-size:26px;font-weight:900;color:#f5d77a}
+  .bar-bg{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,#e6a019,#f5d77a);border-radius:5px;transition:width 0.5s}
+  .overall-info{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:#8a8a9a}
+  .stage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:20px}
+  .stage-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all 0.2s}
+  .stage-card.active{background:rgba(230,160,25,0.12);border-color:rgba(230,160,25,0.4)}
+  .stage-card-top{display:flex;justify-content:space-between;margin-bottom:6px}
+  .stage-card-name{font-weight:700;font-size:13px}
+  .stage-card-pct{font-size:12px;font-weight:600}
+  .stage-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+  .stage-bar-fill{height:100%;border-radius:2px;transition:width 0.4s}
+  .stage-block{margin-bottom:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden}
+  .stage-header{padding:10px 16px;background:rgba(230,160,25,0.08);border-bottom:1px solid rgba(230,160,25,0.15);display:flex;justify-content:space-between;align-items:center}
+  .stage-header-name{font-weight:700;font-size:15px;color:#e6a019}
+  .stage-header-pct{font-size:12px;color:#8a8a9a}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;min-width:1050px}
+  th{padding:8px 6px;font-size:11px;font-weight:600;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);color:#8a8a9a;white-space:nowrap}
+  td{padding:6px 6px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.04);color:#f0e6d0}
+  td.ctr{text-align:center}
+  td input.num{width:100%;max-width:64px;padding:5px 3px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:5px;color:#f0e6d0;text-align:center;font-size:12px;font-family:'Noto Sans KR';outline:none;transition:border-color 0.2s}
+  td input.num:focus{border-color:#e6a019}
+  td input.tip{width:100%;min-width:180px;padding:5px 6px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:5px;color:#f5d77a;font-size:11px;font-family:'Noto Sans KR';outline:none;transition:border-color 0.2s}
+  td input.tip:focus{border-color:#e6a019}
+  td input.tip::placeholder{color:#555}
+  .badge-done{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#51cf66;background:rgba(81,207,102,0.12);border:1px solid rgba(81,207,102,0.3)}
+  .footer{text-align:center;padding:16px 0 32px;font-size:11px;color:#4a4a5a}
+  .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#e6a019;color:#0d0d1a;padding:10px 24px;border-radius:8px;font-weight:700;z-index:999;font-size:14px;display:none}
+</style>
+</head>
+<body>
+<div id="toast" class="toast"></div>
+<div class="wrap">
+  <div class="header">
+    <div class="header-sub">Mabinogi Ship Crafting</div>
+    <h1>⚓ 마비노기 함선제작 재료표</h1>
+    <div class="header-line"></div>
+    <div class="toolbar">
+      <button onclick="exportJSON()">📤 내보내기</button>
+      <button onclick="importJSON()">📥 불러오기</button>
+      <button onclick="resetAll()">🔄 초기화</button>
+    </div>
+  </div>
+  <div class="overall">
+    <div class="overall-top">
+      <span class="overall-label">전체 진행률</span>
+      <span class="overall-pct" id="overallPct">0.0%</span>
+    </div>
+    <div class="bar-bg"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
+    <div class="overall-info"><span id="overallDone">기입: 0</span><span id="overallNeed">필요: 0</span></div>
+  </div>
+  <div class="stage-grid" id="stageGrid"></div>
+  <div id="tableView"></div>
+  <div class="footer">⚓ 마비노기 함선제작 추적기</div>
+</div>
+<script>
+const MEMBERS=["MarshallJr","네피니스","로에냥","도홍","박야","중황룡","지누킹"];
+const COLORS=["#e6a019","#3b9dff","#ff6b6b","#51cf66","#cc5de8","#ff922b","#20c997"];
+const KEY="mabi_ship_v3";
+
+const STAGES=[
+  {id:"2-4",materials:[["마력 기폭제",500],["타르",1000],["튼튼 버섯 진액",3000]]},
+  {id:"3-1",materials:[["목재+",1500],["상급목재+",600],["타르",500]]},
+  {id:"3-2",materials:[["목재+",1200],["부드러운 목재",420],["밧줄",390]]},
+  {id:"3-3",materials:[["타르",560],["특수강괴",300],["부드러운 목재",300]]},
+  {id:"3-4",materials:[["강철괴",1500],["목재+",1000],["아교",700]]},
+  {id:"3-5",materials:[["특수강괴",240],["상급목재+",600],["아교",700]]},
+  {id:"3-6",materials:[["상급목재+",300],["마력 기폭제",500],["튼튼 버섯 진액",2250]]},
+  {id:"3-7",materials:[["특수강괴",300],["상급목재+",600],["타르",600]]},
+  {id:"3-8",materials:[["단단한 목재",300],["두꺼운 옷감",800],["튼튼한 밧줄",500]]},
+  {id:"3-9",materials:[["특수강괴",450],["강철괴",1000],["깔끔 버섯 진액",3000]]}
+];
+
+const DEFAULT_DATA={
+  "2-4|마력 기폭제":{MarshallJr:0,네피니스:0,로에냥:66,도홍:40,박야:0,중황룡:25,지누킹:0},
+  "2-4|타르":{MarshallJr:10,네피니스:0,로에냥:359,도홍:1005,박야:0,중황룡:0,지누킹:0},
+  "2-4|튼튼 버섯 진액":{MarshallJr:0,네피니스:0,로에냥:1215,도홍:1023,박야:0,중황룡:779,지누킹:0},
+  "3-1|목재+":{MarshallJr:1000,네피니스:0,로에냥:118,도홍:232,박야:0,중황룡:0,지누킹:0},
+  "3-1|상급목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:44,박야:0,중황룡:0,지누킹:0},
+  "3-1|타르":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-2|목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-2|부드러운 목재":{MarshallJr:21,네피니스:0,로에냥:6,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-2|밧줄":{MarshallJr:0,네피니스:0,로에냥:5,도홍:0,박야:0,중황룡:1,지누킹:0},
+  "3-3|타르":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-3|특수강괴":{MarshallJr:60,네피니스:0,로에냥:29,도홍:36,박야:0,중황룡:157,지누킹:0},
+  "3-3|부드러운 목재":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-4|강철괴":{MarshallJr:0,네피니스:0,로에냥:161,도홍:54,박야:0,중황룡:0,지누킹:0},
+  "3-4|목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-4|아교":{MarshallJr:0,네피니스:0,로에냥:152,도홍:645,박야:0,중황룡:27,지누킹:0},
+  "3-5|특수강괴":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-5|상급목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-5|아교":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-6|상급목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-6|마력 기폭제":{MarshallJr:0,네피니스:0,로에냥:0,도홍:40,박야:0,중황룡:0,지누킹:0},
+  "3-6|튼튼 버섯 진액":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-7|특수강괴":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-7|상급목재+":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-7|타르":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-8|단단한 목재":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-8|두꺼운 옷감":{MarshallJr:0,네피니스:0,로에냥:4,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-8|튼튼한 밧줄":{MarshallJr:0,네피니스:0,로에냥:14,도홍:0,박야:0,중황룡:1,지누킹:0},
+  "3-9|특수강괴":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-9|강철괴":{MarshallJr:0,네피니스:0,로에냥:0,도홍:0,박야:0,중황룡:0,지누킹:0},
+  "3-9|깔끔 버섯 진액":{MarshallJr:0,네피니스:0,로에냥:304,도홍:0,박야:0,중황룡:0,지누킹:0}
+};
+
+const DEFAULT_TIPS={
+  "2-4|마력 기폭제":"[마긴들] 구름황야5구역 입문용곡괭이로 황금부스러기 채집 / [반짝이는이끼] 시드스넬타 황금이끼 채집",
+  "3-1|상급목재+":"[상급통나무] 데코제작4렙-홀름한바닥재데코상자 10회제작 선택시 160개 채집건기 가능",
+  "3-3|부드러운 목재":"[부품] 센마이-일레인 최상급통나무+ 100개 물교(매일캐릭당) or 데코4렙-세다르원형테이블클러C 10회제작",
+  "3-8|단단한 목재":"[단톡] 던바튼 남쪽채소밭 잘나옴 or 센마이-일레인 최상급통나무+ 100개 물교(매일캐릭당)",
+  "3-8|튼튼한 밧줄":"[튼튼한 밧줄] 이멘마하-갈빈 서버단위 주간 1개씩 물교가능 추천!"
+};
+
+let data={}, tips={}, activeStage=null;
+
+function init(){
+  let loaded=false;
+  try{const s=localStorage.getItem(KEY);if(s){const p=JSON.parse(s);data=p.data||{};tips=p.tips||{};loaded=true}}catch(e){}
+  if(!loaded){data=JSON.parse(JSON.stringify(DEFAULT_DATA));tips=JSON.parse(JSON.stringify(DEFAULT_TIPS))}
+  STAGES.forEach(s=>s.materials.forEach(([mat])=>{
+    const k=s.id+"|"+mat;
+    if(!data[k])data[k]=MEMBERS.reduce((a,m)=>({...a,[m]:0}),{});
+    if(!tips[k])tips[k]="";
+  }));
+  renderAll();
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify({data,tips}))}catch(e){}}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2000)}
+
+function toggleStage(id){activeStage=activeStage===id?null:id;renderAll()}
+function updateVal(key,member,val){data[key][member]=Math.max(0,parseInt(val)||0);save();renderAll()}
+function updateTip(key,val){tips[key]=val;save()}
+
+function getStats(){
+  let tN=0,tD=0;
+  STAGES.forEach(s=>s.materials.forEach(([mat,need])=>{
+    const k=s.id+"|"+mat;tN+=need;
+    MEMBERS.forEach(m=>{tD+=data[k]?.[m]||0});
+  }));
+  tD=Math.min(tD,tN);
+  const sp=STAGES.map(s=>{
+    let sN=0,sD=0;
+    s.materials.forEach(([mat,need])=>{sN+=need;MEMBERS.forEach(m=>{sD+=data[s.id+"|"+mat]?.[m]||0})});
+    sD=Math.min(sD,sN);
+    return{id:s.id,needed:sN,done:sD,pct:sN?Math.min(sD/sN*100,100):0};
+  });
+  return{tN,tD,pct:tN?Math.min(tD/tN*100,100):0,sp};
+}
+
+function renderAll(){
+  const st=getStats();
+  document.getElementById("overallPct").textContent=st.pct.toFixed(1)+"%";
+  document.getElementById("overallBar").style.width=st.pct+"%";
+  document.getElementById("overallDone").textContent="기입: "+st.tD.toLocaleString();
+  document.getElementById("overallNeed").textContent="필요: "+st.tN.toLocaleString();
+
+  let sg="";
+  st.sp.forEach(s=>{
+    const act=activeStage===s.id?"active":"";
+    const col=s.pct>=100?"#51cf66":"#e6a019";
+    const bg=s.pct>=100?"#51cf66":"linear-gradient(90deg,#e6a019,#f5d77a)";
+    sg+=`<div class="stage-card ${act}" onclick="toggleStage('${s.id}')"><div class="stage-card-top"><span class="stage-card-name">${s.id}</span><span class="stage-card-pct" style="color:${col}">${s.pct.toFixed(0)}%</span></div><div class="stage-bar"><div class="stage-bar-fill" style="width:${s.pct}%;background:${bg}"></div></div></div>`;
+  });
+  document.getElementById("stageGrid").innerHTML=sg;
+
+  let tb="";
+  STAGES.filter(s=>!activeStage||s.id===activeStage).forEach(s=>{
+    const sp=st.sp.find(x=>x.id===s.id);
+    tb+=`<div class="stage-block"><div class="stage-header"><span class="stage-header-name">단계 ${s.id}</span><span class="stage-header-pct">${sp.pct.toFixed(1)}% 완료</span></div><div class="table-wrap"><table><thead><tr><th>재료</th><th style="width:58px">필요</th>`;
+    MEMBERS.forEach((m,i)=>tb+=`<th style="color:${COLORS[i]};min-width:68px">${m}</th>`);
+    tb+=`<th style="width:58px">합계</th><th style="width:58px">잔여</th><th style="width:64px">달성</th><th style="min-width:200px">꿀팁공유</th></tr></thead><tbody>`;
+    s.materials.forEach(([mat,need])=>{
+      const k=s.id+"|"+mat,row=data[k]||{};
+      const sum=MEMBERS.reduce((a,m)=>a+(row[m]||0),0);
+      const rem=need-sum;
+      const done=rem<=0;
+      tb+=`<tr><td>${mat}</td><td class="ctr" style="font-weight:600">${need.toLocaleString()}</td>`;
+      MEMBERS.forEach(m=>{
+        const v=row[m]||"";
+        tb+=`<td class="ctr" style="padding:3px"><input class="num" type="number" min="0" value="${v||""}" placeholder="0" onchange="updateVal('${k}','${m}',this.value)" oninput="updateVal('${k}','${m}',this.value)"></td>`;
+      });
+      tb+=`<td class="ctr" style="font-weight:700;color:#f5d77a">${sum.toLocaleString()}</td>`;
+      tb+=`<td class="ctr" style="font-weight:700;color:${done?"#51cf66":"#ff6b6b"}">${done?rem.toLocaleString():rem.toLocaleString()}</td>`;
+      tb+=`<td class="ctr">${done?'<span class="badge-done">목표달성</span>':''}</td>`;
+      const tipVal=(tips[k]||"").replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+      tb+=`<td style="padding:3px"><input class="tip" type="text" value="${tipVal}" placeholder="꿀팁을 입력하세요" onchange="updateTip('${k}',this.value)"></td>`;
+      tb+=`</tr>`;
+    });
+    tb+=`</tbody></table></div></div>`;
+  });
+  document.getElementById("tableView").innerHTML=tb;
+}
+
+function exportJSON(){
+  const b=new Blob([JSON.stringify({data,tips},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);
+  a.download="함선제작_"+new Date().toISOString().slice(0,10)+".json";a.click();
+  showToast("데이터를 내보냈습니다!");
+}
+function importJSON(){
+  const input=document.createElement("input");input.type="file";input.accept=".json";
+  input.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=ev=>{try{const p=JSON.parse(ev.target.result);data=p.data||p;tips=p.tips||{};save();renderAll();showToast("데이터를 불러왔습니다!")}catch(e){showToast("파일 형식 오류!")}};r.readAsText(f)};
+  input.click();
+}
+function resetAll(){
+  if(!confirm("모든 데이터를 초기화하시겠습니까?"))return;
+  data=JSON.parse(JSON.stringify(DEFAULT_DATA));
+  tips=JSON.parse(JSON.stringify(DEFAULT_TIPS));
+  save();renderAll();showToast("초기화 완료!");
+}
+init();
+</script>
+</body>
+</html>
