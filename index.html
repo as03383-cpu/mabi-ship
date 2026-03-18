@@ -19,6 +19,32 @@
   .header-sub{font-size:11px;letter-spacing:6px;color:#e6a019;text-transform:uppercase;margin-bottom:6px}
   .header h1{font-size:clamp(24px,5vw,38px);font-weight:900;background:linear-gradient(135deg,#e6a019,#f5d77a,#e6a019);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   .header-line{width:80px;height:2px;background:linear-gradient(90deg,transparent,#e6a019,transparent);margin:14px auto}
+
+  /* ── 동기화 상태 표시 ── */
+  .sync-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .sync-indicator{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);transition:all 0.3s}
+  .sync-indicator .dot{width:7px;height:7px;border-radius:50%;transition:background 0.3s}
+  .sync-indicator.connected .dot{background:#51cf66;box-shadow:0 0 6px rgba(81,207,102,0.5)}
+  .sync-indicator.syncing .dot{background:#e6a019;animation:pulse 1s infinite}
+  .sync-indicator.offline .dot{background:#ff6b6b}
+  .sync-indicator.error .dot{background:#ff6b6b}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .sync-time{font-size:10px;color:#6a6a7a}
+  .sync-btn{padding:3px 10px;border-radius:12px;border:1px solid rgba(230,160,25,0.3);background:rgba(230,160,25,0.08);color:#e6a019;cursor:pointer;font-size:11px;font-family:'Noto Sans KR';transition:all 0.2s}
+  .sync-btn:hover{background:rgba(230,160,25,0.2);border-color:#e6a019}
+
+  /* ── 설정 패널 ── */
+  .config-panel{display:none;background:rgba(230,160,25,0.06);border:1px solid rgba(230,160,25,0.2);border-radius:12px;padding:16px;margin-top:12px;text-align:left}
+  .config-panel.show{display:block}
+  .config-panel label{font-size:12px;font-weight:600;color:#e6a019;display:block;margin-bottom:4px}
+  .config-panel input[type=text]{width:100%;padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0e6d0;font-size:12px;font-family:'Noto Sans KR';outline:none}
+  .config-panel input[type=text]:focus{border-color:#e6a019}
+  .config-panel .config-actions{display:flex;gap:8px;margin-top:10px}
+  .config-panel .config-actions button{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-family:'Noto Sans KR';font-weight:600}
+  .config-panel .btn-save{background:#e6a019;color:#0d0d1a}
+  .config-panel .btn-upload{background:rgba(81,207,102,0.15);color:#51cf66;border:1px solid rgba(81,207,102,0.3) !important}
+  .config-panel .config-hint{font-size:10px;color:#6a6a7a;margin-top:6px}
+
   .toolbar{display:flex;justify-content:center;gap:8px;margin-top:8px;flex-wrap:wrap}
   .toolbar button{padding:6px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#8a8a9a;cursor:pointer;font-size:12px;font-family:'Noto Sans KR';transition:all 0.2s}
   .toolbar button:hover{border-color:#e6a019;color:#e6a019}
@@ -63,12 +89,37 @@
     <div class="header-sub">Mabinogi Ship Crafting</div>
     <h1>⚓ 마비노기 함선제작 재료표</h1>
     <div class="header-line"></div>
+
+    <!-- ── 동기화 상태 ── -->
+    <div class="sync-bar">
+      <div class="sync-indicator offline" id="syncStatus">
+        <span class="dot"></span>
+        <span id="syncLabel">오프라인</span>
+      </div>
+      <span class="sync-time" id="syncTime"></span>
+      <button class="sync-btn" onclick="manualSync()">🔄 새로고침</button>
+      <button class="sync-btn" onclick="toggleConfig()">⚙️ 설정</button>
+    </div>
+
+    <!-- ── API URL 설정 패널 ── -->
+    <div class="config-panel" id="configPanel">
+      <label>Google Apps Script 웹 앱 URL</label>
+      <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/XXXXXX/exec" />
+      <div class="config-hint">Apps Script 배포 후 받은 URL을 붙여넣으세요</div>
+      <div class="config-actions">
+        <button class="btn-save" onclick="saveApiUrl()">💾 저장 및 연결</button>
+        <button class="btn-upload" onclick="uploadToCloud()">☁️ 현재 데이터 업로드</button>
+      </div>
+      <div class="config-hint" style="margin-top:8px">⚠️ 처음 연결 시 "현재 데이터 업로드" 를 눌러 기존 데이터를 스프레드시트에 올리세요</div>
+    </div>
+
     <div class="toolbar">
       <button onclick="exportJSON()">📤 내보내기</button>
       <button onclick="importJSON()">📥 불러오기</button>
       <button onclick="resetAll()">🔄 초기화</button>
     </div>
   </div>
+
   <div class="overall">
     <div class="overall-top">
       <span class="overall-label">전체 진행률</span>
@@ -77,14 +128,21 @@
     <div class="bar-bg"><div class="bar-fill" id="overallBar" style="width:0%"></div></div>
     <div class="overall-info"><span id="overallDone">기입: 0</span><span id="overallNeed">필요: 0</span></div>
   </div>
+
   <div class="stage-grid" id="stageGrid"></div>
   <div id="tableView"></div>
-  <div class="footer">⚓ 마비노기 함선제작 추적기</div>
+  <div class="footer">⚓ 마비노기 함선제작 추적기 · 실시간 동기화</div>
 </div>
+
 <script>
+// ════════════════════════════════════════════
+//  설정
+// ════════════════════════════════════════════
 const MEMBERS=["MarshallJr","네피니스","로에냥","도홍","박야","중황룡","지누킹"];
 const COLORS=["#e6a019","#3b9dff","#ff6b6b","#51cf66","#cc5de8","#ff922b","#20c997"];
 const KEY="mabi_ship_v3";
+const API_KEY="mabi_ship_api_url";
+const SYNC_INTERVAL=30000; // 30초마다 자동 동기화
 
 const STAGES=[
   {id:"2-4",materials:[["마력 기폭제",500],["타르",1000],["튼튼 버섯 진액",3000]]},
@@ -140,27 +198,229 @@ const DEFAULT_TIPS={
   "3-8|튼튼한 밧줄":"[튼튼한 밧줄] 이멘마하-갈빈 서버단위 주간 1개씩 물교가능 추천!"
 };
 
+// ════════════════════════════════════════════
+//  상태 변수
+// ════════════════════════════════════════════
 let data={}, tips={}, activeStage=null;
+let apiUrl="";
+let syncTimer=null;
+let isSyncing=false;
 
+// ════════════════════════════════════════════
+//  초기화
+// ════════════════════════════════════════════
 function init(){
+  // API URL 로드
+  apiUrl = localStorage.getItem(API_KEY) || "";
+  if(apiUrl) document.getElementById("apiUrlInput").value = apiUrl;
+
+  // 로컬 데이터 로드 (캐시/폴백)
   let loaded=false;
-  try{const s=localStorage.getItem(KEY);if(s){const p=JSON.parse(s);data=p.data||{};tips=p.tips||{};loaded=true}}catch(e){}
+  try{
+    const s=localStorage.getItem(KEY);
+    if(s){const p=JSON.parse(s);data=p.data||{};tips=p.tips||{};loaded=true}
+  }catch(e){}
   if(!loaded){data=JSON.parse(JSON.stringify(DEFAULT_DATA));tips=JSON.parse(JSON.stringify(DEFAULT_TIPS))}
+
+  // 누락 키 보충
   STAGES.forEach(s=>s.materials.forEach(([mat])=>{
     const k=s.id+"|"+mat;
     if(!data[k])data[k]=MEMBERS.reduce((a,m)=>({...a,[m]:0}),{});
     if(!tips[k])tips[k]="";
   }));
+
   renderAll();
+
+  // 클라우드에서 데이터 불러오기
+  if(apiUrl){
+    fetchFromCloud();
+    startAutoSync();
+  } else {
+    setSyncStatus("offline","설정 필요");
+  }
 }
 
-function save(){try{localStorage.setItem(KEY,JSON.stringify({data,tips}))}catch(e){}}
-function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2000)}
+// ════════════════════════════════════════════
+//  동기화 상태 표시
+// ════════════════════════════════════════════
+function setSyncStatus(status, label){
+  const el=document.getElementById("syncStatus");
+  const lb=document.getElementById("syncLabel");
+  el.className="sync-indicator "+status;
+  lb.textContent=label;
+}
+
+function updateSyncTime(){
+  document.getElementById("syncTime").textContent="마지막: "+new Date().toLocaleTimeString("ko-KR");
+}
+
+// ════════════════════════════════════════════
+//  클라우드 통신 (Google Apps Script)
+// ════════════════════════════════════════════
+
+// GET: 전체 데이터 불러오기
+async function fetchFromCloud(){
+  if(!apiUrl || isSyncing) return;
+  isSyncing=true;
+  setSyncStatus("syncing","동기화 중...");
+  try{
+    const res=await fetch(apiUrl+"?t="+Date.now());
+    const json=await res.json();
+    if(json.success && json.data && Object.keys(json.data).length>0){
+      // 서버 데이터로 병합 (서버 우선)
+      Object.keys(json.data).forEach(k=>{
+        data[k]=json.data[k];
+      });
+      if(json.tips){
+        Object.keys(json.tips).forEach(k=>{
+          if(json.tips[k]) tips[k]=json.tips[k];
+        });
+      }
+      saveLocal();
+      renderAll();
+      setSyncStatus("connected","연결됨");
+      updateSyncTime();
+    } else if(json.success){
+      // 서버에 데이터가 없음 (첫 연결) - 로컬 유지
+      setSyncStatus("connected","연결됨 (서버 비어있음)");
+      updateSyncTime();
+    } else {
+      setSyncStatus("error","오류: "+json.error);
+    }
+  }catch(e){
+    console.error("Fetch error:",e);
+    setSyncStatus("error","연결 실패");
+  }
+  isSyncing=false;
+}
+
+// POST: 단일 셀 업데이트
+async function pushCellToCloud(key, member, value){
+  if(!apiUrl) return;
+  try{
+    await fetch(apiUrl,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain"}, // Apps Script CORS 우회
+      body:JSON.stringify({action:"update_cell",key,member,value}),
+      mode:"no-cors"
+    });
+    // no-cors이므로 응답을 읽을 수 없지만, 전송은 됨
+  }catch(e){
+    console.error("Push cell error:",e);
+  }
+}
+
+// POST: 꿀팁 업데이트
+async function pushTipToCloud(key, value){
+  if(!apiUrl) return;
+  try{
+    await fetch(apiUrl,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify({action:"update_tip",key,value}),
+      mode:"no-cors"
+    });
+  }catch(e){
+    console.error("Push tip error:",e);
+  }
+}
+
+// POST: 전체 데이터 업로드
+async function uploadToCloud(){
+  if(!apiUrl){showToast("먼저 API URL을 설정하세요!");return}
+  setSyncStatus("syncing","업로드 중...");
+  try{
+    const res=await fetch(apiUrl,{
+      method:"POST",
+      body:JSON.stringify({action:"bulk_sync",data,tips}),
+    });
+    const json=await res.json();
+    if(json.success){
+      showToast("☁️ 스프레드시트에 전체 데이터 업로드 완료!");
+      setSyncStatus("connected","연결됨");
+      updateSyncTime();
+    } else {
+      showToast("업로드 실패: "+json.error);
+      setSyncStatus("error","업로드 실패");
+    }
+  }catch(e){
+    console.error("Upload error:",e);
+    showToast("업로드 실패! URL을 확인해주세요.");
+    setSyncStatus("error","업로드 실패");
+  }
+}
+
+// 자동 동기화 타이머
+function startAutoSync(){
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer=setInterval(()=>{
+    if(apiUrl) fetchFromCloud();
+  },SYNC_INTERVAL);
+}
+
+function manualSync(){
+  if(apiUrl){
+    fetchFromCloud();
+  } else {
+    showToast("먼저 API URL을 설정하세요!");
+  }
+}
+
+// ════════════════════════════════════════════
+//  설정 패널
+// ════════════════════════════════════════════
+function toggleConfig(){
+  document.getElementById("configPanel").classList.toggle("show");
+}
+
+function saveApiUrl(){
+  const url=document.getElementById("apiUrlInput").value.trim();
+  if(!url){showToast("URL을 입력하세요!");return}
+  apiUrl=url;
+  localStorage.setItem(API_KEY,url);
+  showToast("✅ API URL 저장 완료!");
+  fetchFromCloud();
+  startAutoSync();
+  document.getElementById("configPanel").classList.remove("show");
+}
+
+// ════════════════════════════════════════════
+//  데이터 관리
+// ════════════════════════════════════════════
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify({data,tips}))}catch(e){}}
+function save(){saveLocal()}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",2500)}
 
 function toggleStage(id){activeStage=activeStage===id?null:id;renderAll()}
-function updateVal(key,member,val){data[key][member]=Math.max(0,parseInt(val)||0);save();renderAll()}
-function updateTip(key,val){tips[key]=val;save()}
 
+// 디바운스 유틸
+const _debounceTimers={};
+function debounce(id,fn,ms=500){
+  clearTimeout(_debounceTimers[id]);
+  _debounceTimers[id]=setTimeout(fn,ms);
+}
+
+function updateVal(key,member,val){
+  data[key][member]=Math.max(0,parseInt(val)||0);
+  save();
+  renderAll();
+  // 클라우드에 디바운스 전송
+  debounce("cell_"+key+"_"+member, ()=>{
+    pushCellToCloud(key,member,data[key][member]);
+  }, 800);
+}
+
+function updateTip(key,val){
+  tips[key]=val;
+  save();
+  debounce("tip_"+key, ()=>{
+    pushTipToCloud(key,val);
+  }, 1000);
+}
+
+// ════════════════════════════════════════════
+//  통계 & 렌더링
+// ════════════════════════════════════════════
 function getStats(){
   let tN=0,tD=0;
   STAGES.forEach(s=>s.materials.forEach(([mat,need])=>{
@@ -212,7 +472,7 @@ function renderAll(){
         tb+=`<td class="ctr" style="padding:3px"><input class="num" type="number" min="0" value="${v||""}" placeholder="0" onchange="updateVal('${k}','${m}',this.value)" oninput="updateVal('${k}','${m}',this.value)"></td>`;
       });
       tb+=`<td class="ctr" style="font-weight:700;color:#f5d77a">${sum.toLocaleString()}</td>`;
-      tb+=`<td class="ctr" style="font-weight:700;color:${done?"#51cf66":"#ff6b6b"}">${done?rem.toLocaleString():rem.toLocaleString()}</td>`;
+      tb+=`<td class="ctr" style="font-weight:700;color:${done?"#51cf66":"#ff6b6b"}">${rem.toLocaleString()}</td>`;
       tb+=`<td class="ctr">${done?'<span class="badge-done">목표달성</span>':''}</td>`;
       const tipVal=(tips[k]||"").replace(/'/g,"&#39;").replace(/"/g,"&quot;");
       tb+=`<td style="padding:3px"><input class="tip" type="text" value="${tipVal}" placeholder="꿀팁을 입력하세요" onchange="updateTip('${k}',this.value)"></td>`;
@@ -223,24 +483,40 @@ function renderAll(){
   document.getElementById("tableView").innerHTML=tb;
 }
 
+// ════════════════════════════════════════════
+//  내보내기 / 불러오기 / 초기화
+// ════════════════════════════════════════════
 function exportJSON(){
   const b=new Blob([JSON.stringify({data,tips},null,2)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);
   a.download="함선제작_"+new Date().toISOString().slice(0,10)+".json";a.click();
   showToast("데이터를 내보냈습니다!");
 }
+
 function importJSON(){
   const input=document.createElement("input");input.type="file";input.accept=".json";
   input.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
-    r.onload=ev=>{try{const p=JSON.parse(ev.target.result);data=p.data||p;tips=p.tips||{};save();renderAll();showToast("데이터를 불러왔습니다!")}catch(e){showToast("파일 형식 오류!")}};r.readAsText(f)};
+    r.onload=ev=>{try{
+      const p=JSON.parse(ev.target.result);
+      data=p.data||p;tips=p.tips||{};
+      save();renderAll();
+      showToast("데이터를 불러왔습니다!");
+      // 클라우드에도 동기화
+      if(apiUrl && confirm("불러온 데이터를 스프레드시트에도 업로드하시겠습니까?")) uploadToCloud();
+    }catch(e){showToast("파일 형식 오류!")}};r.readAsText(f)};
   input.click();
 }
+
 function resetAll(){
   if(!confirm("모든 데이터를 초기화하시겠습니까?"))return;
   data=JSON.parse(JSON.stringify(DEFAULT_DATA));
   tips=JSON.parse(JSON.stringify(DEFAULT_TIPS));
   save();renderAll();showToast("초기화 완료!");
 }
+
+// ════════════════════════════════════════════
+//  시작!
+// ════════════════════════════════════════════
 init();
 </script>
 </body>
