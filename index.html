@@ -403,7 +403,7 @@ function debounce(id,fn,ms=500){
 function updateVal(key,member,val){
   data[key][member]=Math.max(0,parseInt(val)||0);
   save();
-  renderAll();
+  updateStatsOnly(); // 입력 중엔 통계만 업데이트 (테이블 재렌더 안함)
   // 클라우드에 디바운스 전송
   debounce("cell_"+key+"_"+member, ()=>{
     pushCellToCloud(key,member,data[key][member]);
@@ -458,22 +458,24 @@ function renderAll(){
   let tb="";
   STAGES.filter(s=>!activeStage||s.id===activeStage).forEach(s=>{
     const sp=st.sp.find(x=>x.id===s.id);
-    tb+=`<div class="stage-block"><div class="stage-header"><span class="stage-header-name">단계 ${s.id}</span><span class="stage-header-pct">${sp.pct.toFixed(1)}% 완료</span></div><div class="table-wrap"><table><thead><tr><th>재료</th><th style="width:58px">필요</th>`;
+    const sid=s.id.replace("-","_");
+    tb+=`<div class="stage-block"><div class="stage-header"><span class="stage-header-name">단계 ${s.id}</span><span class="stage-header-pct" id="sh_${sid}">${sp.pct.toFixed(1)}% 완료</span></div><div class="table-wrap"><table><thead><tr><th>재료</th><th style="width:58px">필요</th>`;
     MEMBERS.forEach((m,i)=>tb+=`<th style="color:${COLORS[i]};min-width:68px">${m}</th>`);
     tb+=`<th style="width:58px">합계</th><th style="width:58px">잔여</th><th style="width:64px">달성</th><th style="min-width:200px">꿀팁공유</th></tr></thead><tbody>`;
-    s.materials.forEach(([mat,need])=>{
+    s.materials.forEach(([mat,need],mi)=>{
       const k=s.id+"|"+mat,row=data[k]||{};
       const sum=MEMBERS.reduce((a,m)=>a+(row[m]||0),0);
       const rem=need-sum;
       const done=rem<=0;
+      const rid=sid+"_"+mi;
       tb+=`<tr><td>${mat}</td><td class="ctr" style="font-weight:600">${need.toLocaleString()}</td>`;
       MEMBERS.forEach(m=>{
         const v=row[m]||"";
         tb+=`<td class="ctr" style="padding:3px"><input class="num" type="number" min="0" value="${v||""}" placeholder="0" onchange="updateVal('${k}','${m}',this.value)" oninput="updateVal('${k}','${m}',this.value)"></td>`;
       });
-      tb+=`<td class="ctr" style="font-weight:700;color:#f5d77a">${sum.toLocaleString()}</td>`;
-      tb+=`<td class="ctr" style="font-weight:700;color:${done?"#51cf66":"#ff6b6b"}">${rem.toLocaleString()}</td>`;
-      tb+=`<td class="ctr">${done?'<span class="badge-done">목표달성</span>':''}</td>`;
+      tb+=`<td class="ctr" style="font-weight:700;color:#f5d77a" id="sum_${rid}">${sum.toLocaleString()}</td>`;
+      tb+=`<td class="ctr" style="font-weight:700" id="rem_${rid}">${rem.toLocaleString()}</td>`;
+      tb+=`<td class="ctr" id="badge_${rid}">${done?'<span class="badge-done">목표달성</span>':''}</td>`;
       const tipVal=(tips[k]||"").replace(/'/g,"&#39;").replace(/"/g,"&quot;");
       tb+=`<td style="padding:3px"><input class="tip" type="text" value="${tipVal}" placeholder="꿀팁을 입력하세요" onchange="updateTip('${k}',this.value)"></td>`;
       tb+=`</tr>`;
@@ -481,6 +483,50 @@ function renderAll(){
     tb+=`</tbody></table></div></div>`;
   });
   document.getElementById("tableView").innerHTML=tb;
+}
+
+// ── 입력 중 포커스 유지하며 통계만 업데이트 ──
+function updateStatsOnly(){
+  const st=getStats();
+  document.getElementById("overallPct").textContent=st.pct.toFixed(1)+"%";
+  document.getElementById("overallBar").style.width=st.pct+"%";
+  document.getElementById("overallDone").textContent="기입: "+st.tD.toLocaleString();
+  document.getElementById("overallNeed").textContent="필요: "+st.tN.toLocaleString();
+
+  // 스테이지 카드 업데이트
+  const cards=document.querySelectorAll(".stage-card");
+  st.sp.forEach((s,i)=>{
+    if(cards[i]){
+      const pctEl=cards[i].querySelector(".stage-card-pct");
+      const barEl=cards[i].querySelector(".stage-bar-fill");
+      if(pctEl){pctEl.textContent=s.pct.toFixed(0)+"%";pctEl.style.color=s.pct>=100?"#51cf66":"#e6a019"}
+      if(barEl){barEl.style.width=s.pct+"%";barEl.style.background=s.pct>=100?"#51cf66":"linear-gradient(90deg,#e6a019,#f5d77a)"}
+    }
+  });
+
+  // 테이블 내 합계/잔여/달성 + 스테이지 헤더만 업데이트
+  STAGES.filter(s=>!activeStage||s.id===activeStage).forEach(s=>{
+    const sp=st.sp.find(x=>x.id===s.id);
+    const sid=s.id.replace("-","_");
+    const shEl=document.getElementById("sh_"+sid);
+    if(shEl) shEl.textContent=sp.pct.toFixed(1)+"% 완료";
+
+    s.materials.forEach(([mat,need],mi)=>{
+      const k=s.id+"|"+mat,row=data[k]||{};
+      const sum=MEMBERS.reduce((a,m)=>a+(row[m]||0),0);
+      const rem=need-sum;
+      const done=rem<=0;
+      const rid=sid+"_"+mi;
+
+      const sumEl=document.getElementById("sum_"+rid);
+      const remEl=document.getElementById("rem_"+rid);
+      const badgeEl=document.getElementById("badge_"+rid);
+
+      if(sumEl) sumEl.textContent=sum.toLocaleString();
+      if(remEl){remEl.textContent=rem.toLocaleString();remEl.style.color=done?"#51cf66":"#ff6b6b"}
+      if(badgeEl) badgeEl.innerHTML=done?'<span class="badge-done">목표달성</span>':'';
+    });
+  });
 }
 
 // ════════════════════════════════════════════
